@@ -20,7 +20,7 @@ def populate_queue():
     return queue_url
 
 @task
-def monitor_queue(queue_url: str, expected: int = 21, timeout: int = 900, interval: int = 15):
+def monitor_queue(queue_url: str, expected: int = 21, timeout: int = 930, interval: int = 15):
     logger = get_run_logger()
     sqs = boto3.client("sqs")
     start = time.time()
@@ -46,7 +46,7 @@ def monitor_queue(queue_url: str, expected: int = 21, timeout: int = 900, interv
 
 
 @task
-def reassemble_and_submit(queue_url: str):
+def reassemble_and_submit(queue_url: str, expected: int = 21, uvaid: str = "vxm2ek", platform: str = "prefect"):
     logger = get_run_logger()
     sqs = boto3.client("sqs")
     
@@ -101,8 +101,6 @@ def reassemble_and_submit(queue_url: str):
                 order_no = int(attributes['order_no']['StringValue'])
                 # get word from message
                 word = attributes.get('word', {}).get('StringValue', '')
-                uvaid = attributes.get('uvaid', {}).get('StringValue', '')
-                platform = attributes.get('platform', {}).get('StringValue', '')
                 
                 message_data.append({
                     'order_no': order_no,
@@ -140,11 +138,7 @@ def reassemble_and_submit(queue_url: str):
     # Reassemble messages
     phrase = " ".join(msg['word'] for msg in message_data)
     
-    # uvaid and platform should be the same for all messages
-    uvaid = message_data[0]['uvaid'] if message_data else ''
-    platform = message_data[0]['platform'] if message_data else ''
-    
-    logger.info(f"Reassembled phrase: {phrase[:50]}...")
+    logger.info(f"Reassembled phrase: {phrase}")
     
     # Submit to submission queue
     submission_url = "https://sqs.us-east-1.amazonaws.com/440848399208/dp2-submit"
@@ -178,7 +172,7 @@ def reassemble_and_submit(queue_url: str):
 
 
 @flow
-def main():
+def dp2_flow():
     logger = get_run_logger()
     queue_url = populate_queue()
     monitor_queue(queue_url)
@@ -186,5 +180,5 @@ def main():
     logger.info("Flow completed successfully")
 
 if __name__ == "__main__":
-    main()
+    dp2_flow()
 
