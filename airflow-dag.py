@@ -188,8 +188,8 @@ def reassemble_and_submit(queue_url: str, expected: int = 21, uvaid: str = "vxm2
 def dp2_flow():
     
     queue_url = populate_queue()
-    monitor_queue(queue_url)
-    reassemble_and_submit(queue_url)
+    monitor = monitor_queue(queue_url)
+    monitor >> reassemble_and_submit(queue_url)
 
 # Instantiate the DAG
 dp2_flow()
